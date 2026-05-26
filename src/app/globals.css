@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  
+  --color-bg:           #000000;
+  --color-bg-deep:      #050508;
+  --color-bg-surface:   #0a0a0f;
+  --color-bg-elevated:  #111118;
+
+  --color-text-primary:   #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.65);
+  --color-text-tertiary:  rgba(255, 255, 255, 0.35);
+  --color-text-disabled:  rgba(255, 255, 255, 0.20);
+
+  --color-gold:         #ffffff;
+  --color-gold-bright:  #ffffff;
+  --color-gold-dim:     rgba(255, 255, 255, 0.4);
+  --color-gold-glow:    rgba(255, 255, 255, 0.15);
+
+  --glass-bg:           rgba(255, 255, 255, 0.03);
+  --glass-bg-hover:     rgba(255, 255, 255, 0.06);
+  --glass-border:       rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+
+  --shadow-gold:   0 0 60px rgba(255, 255, 255, 0.1);
+  --shadow-card:   0 25px 50px rgba(0, 0, 0, 0.5);
+  --shadow-glow:   0 0 120px rgba(255, 255, 255, 0.08);
+}
+
+@theme {
+  --color-gold: #ffffff;
+  --color-gold-bright: #ffffff;
+  --color-gold-dim: rgba(255, 255, 255, 0.4);
+  --color-gold-glow: rgba(255, 255, 255, 0.15);
+
+  --color-bg-deep: #050508;
+  --color-bg-surface: #0a0a0f;
+  --color-bg-elevated: #111118;
+
+  --font-display: var(--font-display), Georgia, serif;
+  --font-body: var(--font-body), system-ui, sans-serif;
+  --font-mono: var(--font-mono), monospace;
+
+  --animate-cursor-pulse: cursorPulse 2s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-gold-shimmer: goldShimmer 3s ease-in-out infinite;
+
+  @keyframes cursorPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+  @keyframes goldShimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+
+/* Custom styles for luxury web experiences */
+html, body {
+  background: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+* {
+  box-sizing: border-box;
+  scrollbar-width: none !important;        /* Firefox */
+  -ms-overflow-style: none !important;     /* IE */
+}
+
+/* Typography scale utilities */
+.text-display-xl {
+  font-size: clamp(2.5rem, 7vw, 6.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+.text-display-lg {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+}
+.text-display-md {
+  font-size: clamp(1.8rem, 3.5vw, 3.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.text-display-sm {
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.text-body-lg {
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  line-height: 1.7;
+}
+.text-body-md {
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  line-height: 1.75;
+}
+.text-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Accessibility */
+:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
