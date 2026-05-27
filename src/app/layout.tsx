@@ -63,6 +63,15 @@ export const metadata: Metadata = {
     description: 'Website Development · Graphic Design · Video Editing · Digital Marketing in Gujarat. Get free quote now!',
     images: ['/og-image.jpg'],
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png', sizes: '512x512' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ],
+  },
   manifest: '/site.webmanifest',
   other: {
     'revisit-after': '3 days',
