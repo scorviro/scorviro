@@ -14,19 +14,19 @@ export default function AboutSection() {
   const team = [
     {
       index: '01',
-      name: 'Dhavalbhai Chavda',
+      name: 'Dhaval Chavda',
       role: 'Creative Director',
       desc: 'Artistic direction & visual narrative design.'
     },
     {
       index: '02',
-      name: 'Dhanrajbhai Chavda',
+      name: 'Dhanraj Chavda',
       role: 'Technical Head',
       desc: 'High-performance creative engineering.'
     },
     {
       index: '03',
-      name: 'Chudasama Mohit',
+      name: 'Mohit Chudasama',
       role: 'Design Strategist',
       desc: 'Brand positioning & conceptual art.'
     }

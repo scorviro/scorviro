@@ -1,29 +1,27 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Points, PointMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 
+const PARTICLE_COUNT = 2500
+const particlePositions = (() => {
+  const positions = new Float32Array(PARTICLE_COUNT * 3)
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const r = 2.5 + Math.random() * 7
+    const theta = Math.random() * Math.PI * 2
+    const phi = Math.acos(2 * Math.random() - 1)
+
+    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta)
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+    positions[i * 3 + 2] = r * Math.cos(phi)
+  }
+  return positions
+})()
+
 function ParticleField() {
   const ref = useRef<THREE.Points>(null)
-
-  const particlePositions = useMemo(() => {
-    const count = 2500
-    const positions = new Float32Array(count * 3)
-
-    for (let i = 0; i < count; i++) {
-      const r = 2.5 + Math.random() * 7
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-
-      positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
-      positions[i * 3 + 2] = r * Math.cos(phi)
-    }
-
-    return positions
-  }, [])
 
   useFrame((state) => {
     if (ref.current) {

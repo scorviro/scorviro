@@ -12,15 +12,15 @@ export function useLenis() {
     // Register ScrollTrigger with GSAP
     gsap.registerPlugin(ScrollTrigger)
 
-    // Initialize Lenis with exact user parameters (casted to any to prevent Type check errors on smoothTouch)
+    // Initialize Lenis with exact user parameters
     const lenis = new Lenis({
       duration: 1.6,
       easing: (t: number) => 1 - Math.pow(1 - t, 4),
       wheelMultiplier: 0.72,
       touchMultiplier: 1.0,
-      smoothTouch: false,
+      syncTouch: false,
       infinite: false,
-    } as any)
+    })
 
     lenisInstance = lenis
 

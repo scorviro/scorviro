@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 
 interface PreloaderProps {
@@ -45,7 +45,6 @@ export default function Preloader({ onComplete }: PreloaderProps) {
   const flashRef = useRef<HTMLDivElement>(null)
   
   // State
-  const [exitStarted, setExitStarted] = useState(false)
   
   // Particle & Shockwave arrays
   const particles = useRef<Particle[]>([])
@@ -393,7 +392,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       cancelAnimationFrame(animationFrameId)
       masterTl.kill()
     }
-  }, [])
+  }, [onComplete])
 
   return (
     <div

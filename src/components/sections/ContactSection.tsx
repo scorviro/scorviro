@@ -155,7 +155,7 @@ export default function ContactSection() {
               fontSize: 'clamp(36px, 5.2vw, 68px)',
             }}
           >
-            Let's Build <br />
+            Let&apos;s Build <br />
             Something <br />
             Extraordinary.
           </h2>

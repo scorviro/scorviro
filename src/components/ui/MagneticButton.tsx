@@ -62,7 +62,7 @@ export default function MagneticButton({
   if (href) {
     return (
       <motion.a
-        ref={buttonRef as any}
+        ref={buttonRef as unknown as React.RefObject<HTMLAnchorElement>}
         href={href}
         onClick={onClick}
         data-cursor-text={cursorText}
@@ -77,7 +77,7 @@ export default function MagneticButton({
 
   return (
     <motion.button
-      ref={buttonRef as any}
+      ref={buttonRef as unknown as React.RefObject<HTMLButtonElement>}
       onClick={onClick}
       data-cursor-text={cursorText}
       className={`relative inline-flex items-center justify-center overflow-hidden ${className}`}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowRight, Phone } from '@/components/ui/Icons'
@@ -299,7 +299,6 @@ export default function QuotationSection() {
   const [hasPaymentGateway, setHasPaymentGateway] = useState<boolean>(false)
   const [hasAdvancedSEO, setHasAdvancedSEO] = useState<boolean>(false)
   const [isRushDelivery, setIsRushDelivery] = useState<boolean>(false)
-  const [calculatedPrice, setCalculatedPrice] = useState<number>(25000)
 
   // Videography Calculator State
   const [selectedVideoPackIndex, setSelectedVideoPackIndex] = useState<number>(1) // Gold default
@@ -322,7 +321,6 @@ export default function QuotationSection() {
     travel: false,
     lut: false
   })
-  const [calculatedVideoPrice, setCalculatedVideoPrice] = useState<number>(18000)
 
   // Graphic Post Calculator State
   const [selectedGraphicPackIndex, setSelectedGraphicPackIndex] = useState<number>(0)
@@ -334,10 +332,10 @@ export default function QuotationSection() {
     copywriting: false,
     abTesting: false
   })
-  const [calculatedGraphicPrice, setCalculatedGraphicPrice] = useState<number>(400)
 
   // Price Display Animator State
   const [priceDisplay, setPriceDisplay] = useState<number>(25000)
+  const priceDisplayRef = useRef<number>(25000)
 
   // Refresh ScrollTrigger when tab shifts to avoid layout offset bugs
   useEffect(() => {
@@ -345,7 +343,7 @@ export default function QuotationSection() {
   }, [activeTab])
 
   // Website Math
-  useEffect(() => {
+  const calculatedPrice = useMemo(() => {
     let basePrice = packages[selectedPackIndex].minPrice
     const defaultPages = selectedPackIndex === 0 ? 5 : selectedPackIndex === 1 ? 10 : 15
     if (pagesCount > defaultPages) {
@@ -357,11 +355,11 @@ export default function QuotationSection() {
     if (isRushDelivery) {
       basePrice = Math.round(basePrice * 1.25)
     }
-    setCalculatedPrice(basePrice)
+    return basePrice
   }, [selectedPackIndex, pagesCount, hasCMS, hasPaymentGateway, hasAdvancedSEO, isRushDelivery])
 
   // Videography Math
-  useEffect(() => {
+  const calculatedVideoPrice = useMemo(() => {
     let basePrice = videoPackages[selectedVideoPackIndex].minPrice
 
     const drone = droneOptions.find(o => o.id === selectedDroneOption)
@@ -385,11 +383,11 @@ export default function QuotationSection() {
       }
     })
 
-    setCalculatedVideoPrice(basePrice)
+    return basePrice
   }, [selectedVideoPackIndex, selectedDroneOption, selectedReels, selectedExtras])
 
   // Graphic Math
-  useEffect(() => {
+  const calculatedGraphicPrice = useMemo(() => {
     const pack = graphicPackages[selectedGraphicPackIndex]
     let basePrice = pack.minPrice * graphicQuantity
 
@@ -411,12 +409,12 @@ export default function QuotationSection() {
       basePrice = Math.round(basePrice * 1.30) // +30% rush charges
     }
 
-    setCalculatedGraphicPrice(basePrice)
+    return basePrice
   }, [selectedGraphicPackIndex, graphicQuantity, graphicExtras])
 
   // Ticking number counter effect (animates to targeted calculated cost)
   useEffect(() => {
-    let start = priceDisplay
+    const start = priceDisplayRef.current
     const end = activeTab === 'web' 
       ? calculatedPrice 
       : activeTab === 'video' 
@@ -432,7 +430,9 @@ export default function QuotationSection() {
       duration: duration,
       ease: 'power2.out',
       onUpdate: () => {
-        setPriceDisplay(Math.round(obj.val))
+        const val = Math.round(obj.val)
+        priceDisplayRef.current = val
+        setPriceDisplay(val)
       }
     })
     return () => {
@@ -683,6 +683,7 @@ export default function QuotationSection() {
             <button
               onClick={() => {
                 setActiveTab('web')
+                priceDisplayRef.current = calculatedPrice
                 setPriceDisplay(calculatedPrice)
               }}
               className={`relative z-10 flex-1 py-3 text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.25em] uppercase font-bold text-center transition-colors duration-400 cursor-pointer ${
@@ -694,6 +695,7 @@ export default function QuotationSection() {
             <button
               onClick={() => {
                 setActiveTab('video')
+                priceDisplayRef.current = calculatedVideoPrice
                 setPriceDisplay(calculatedVideoPrice)
               }}
               className={`relative z-10 flex-1 py-3 text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.25em] uppercase font-bold text-center transition-colors duration-400 cursor-pointer ${
@@ -705,6 +707,7 @@ export default function QuotationSection() {
             <button
               onClick={() => {
                 setActiveTab('graphic')
+                priceDisplayRef.current = calculatedGraphicPrice
                 setPriceDisplay(calculatedGraphicPrice)
               }}
               className={`relative z-10 flex-1 py-3 text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.25em] uppercase font-bold text-center transition-colors duration-400 cursor-pointer ${
