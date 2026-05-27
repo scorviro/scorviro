@@ -12,29 +12,48 @@ import QuotationSection from '@/components/sections/QuotationSection'
 import ContactSection from '@/components/sections/ContactSection'
 import Footer from '@/components/layout/Footer'
 
+const backgroundVideoStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
+  objectFit: 'cover',
+  zIndex: 0,
+  pointerEvents: 'none',
+  willChange: 'opacity',
+}
+
+const backgroundOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'linear-gradient(180deg, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.72) 100%)',
+  zIndex: 1,
+  pointerEvents: 'none',
+}
+
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
+  // Effect 1: Handle video autoplay, visibility, and scroll playing strategies
   useEffect(() => {
-    if (!isLoaded) return
-
-    const video = videoRef.current
-    if (video) {
-      // Force play on load and prevent browser autoplay block
-      video.play().catch(() => {})
+    const initialVideo = videoRef.current
+    if (initialVideo) {
+      initialVideo.play().catch(() => {})
     }
 
-    // Ensure it keeps playing forever and doesn't freeze on scroll/visibility change
     const keepPlaying = () => {
+      const video = videoRef.current
       if (video && video.paused) {
         video.play().catch(() => {})
       }
     }
 
     const handleVisibility = () => {
-      if (!document.hidden && video) {
+      const video = videoRef.current
+      if (video && !document.hidden) {
         video.play().catch(() => {})
       }
     }
@@ -42,17 +61,21 @@ export default function Home() {
     document.addEventListener('scroll', keepPlaying, { passive: true })
     document.addEventListener('visibilitychange', handleVisibility)
 
-    // GSAP reveal for page layout content
-    if (contentRef.current) {
-      gsap.fromTo(contentRef.current,
-        { opacity: 0, scale: 0.99 },
-        { opacity: 1, scale: 1, duration: 1.8, ease: 'power3.out' }
-      )
-    }
-
     return () => {
       document.removeEventListener('scroll', keepPlaying)
       document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [])
+
+  // Effect 2: GSAP reveal for page layout content
+  useEffect(() => {
+    if (!isLoaded) return
+
+    if (contentRef.current) {
+      gsap.fromTo(contentRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 1.2, ease: 'power2.out' }
+      )
     }
   }, [isLoaded])
 
@@ -62,39 +85,23 @@ export default function Home() {
       {!isLoaded && <Preloader onComplete={() => setIsLoaded(true)} />}
 
       {/* Fixed background elements (placed outside the animated scale container to preserve position: fixed context) */}
-      {isLoaded && (
-        <>
-          <video
-            ref={videoRef}
-            src="/home_bg.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              objectFit: 'cover',
-              zIndex: 0,
-              opacity: 0.65,
-              pointerEvents: 'none',
-            }}
-          />
+      <video
+        ref={videoRef}
+        src="/home_bg.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        style={{
+          ...backgroundVideoStyle,
+          opacity: isLoaded ? 0.65 : 0,
+          transition: 'opacity 1s ease',
+        }}
+      />
 
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'linear-gradient(180deg, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.72) 100%)',
-              zIndex: 1,
-              pointerEvents: 'none',
-            }}
-          />
-        </>
+      {isLoaded && (
+        <div style={backgroundOverlayStyle} />
       )}
 
       {/* Page Content once loaded */}

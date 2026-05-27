@@ -1,20 +1,17 @@
 'use client'
 
 import React from 'react'
-import { useLenis } from '@/hooks/useLenis'
+import { LenisProvider } from '@/hooks/useLenis'
 
 interface AppProviderProps {
   children: React.ReactNode
 }
 
 export default function AppProvider({ children }: AppProviderProps) {
-  // Initialize buttery smooth scrolling
-  useLenis()
-
   return (
-    <>
+    <LenisProvider>
       {/* Main page content */}
       {children}
-    </>
+    </LenisProvider>
   )
 }

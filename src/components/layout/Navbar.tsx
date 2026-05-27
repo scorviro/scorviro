@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { scrollTo } from '@/hooks/useLenis'
+import { useLenis } from '@/hooks/useLenis'
 
 interface NavbarProps {
   visible: boolean
@@ -12,6 +13,7 @@ export default function Navbar({ visible }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
+  const { scrollTo } = useLenis()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,26 +26,21 @@ export default function Navbar({ visible }: NavbarProps) {
   }, [])
 
   useEffect(() => {
-    const handleIntersection = () => {
-      const sections = ['home', 'about', 'services', 'work', 'quotation', 'contact']
-      const scrollPos = window.scrollY + 120
-      
-      for (const section of sections) {
-        const el = document.getElementById(section)
-        if (el) {
-          const top = el.offsetTop
-          const height = el.offsetHeight
-          if (scrollPos >= top && scrollPos < top + height) {
-            setActiveSection(section)
-            break
-          }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id)
         }
-      }
-    }
+      })
+    }, { rootMargin: '-20% 0px -60% 0px' })
 
-    window.addEventListener('scroll', handleIntersection, { passive: true })
-    handleIntersection()
-    return () => window.removeEventListener('scroll', handleIntersection)
+    const sections = ['home', 'about', 'services', 'work', 'quotation', 'contact']
+    sections.forEach((id) => {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    })
+
+    return () => observer.disconnect()
   }, [])
 
   const navLinks = [
@@ -86,9 +83,11 @@ export default function Navbar({ visible }: NavbarProps) {
         >
           {/* Logo Badge with White Background */}
           <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-105 shadow-md shadow-white/10">
-            <img
+            <Image
               src="/favicon.png"
               alt="Scorviro Logo"
+              width={22}
+              height={22}
               className="w-5.5 h-5.5 object-contain"
             />
           </div>
@@ -162,6 +161,7 @@ export default function Navbar({ visible }: NavbarProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
             className="fixed inset-0 z-[99] bg-black/95 backdrop-blur-md flex flex-col justify-center items-center"
+            style={{ willChange: 'opacity' }}
           >
             <nav className="flex flex-col items-center gap-8" aria-label="Mobile Navigation">
               {navLinks.map((link) => {

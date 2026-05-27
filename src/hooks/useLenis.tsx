@@ -1,13 +1,21 @@
 'use client'
 
-import { useEffect } from 'react'
+import React, { createContext, useContext, useEffect, useRef } from 'react'
 import Lenis from 'lenis'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-let lenisInstance: Lenis | null = null
+interface LenisContextType {
+  scrollTo: (target: string | number | HTMLElement, options?: object) => void
+}
 
-export function useLenis() {
+const LenisContext = createContext<LenisContextType>({
+  scrollTo: () => {}
+})
+
+export function LenisProvider({ children }: { children: React.ReactNode }) {
+  const lenisRef = useRef<Lenis | null>(null)
+
   useEffect(() => {
     // Register ScrollTrigger with GSAP
     gsap.registerPlugin(ScrollTrigger)
@@ -22,7 +30,7 @@ export function useLenis() {
       infinite: false,
     })
 
-    lenisInstance = lenis
+    lenisRef.current = lenis
 
     // Sync Lenis with ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update)
@@ -38,17 +46,24 @@ export function useLenis() {
 
     return () => {
       lenis.destroy()
-      lenisInstance = null
+      lenisRef.current = null
       gsap.ticker.remove(rafCallback)
     }
   }, [])
 
-  return lenisInstance
+  const scrollTo = (target: string | number | HTMLElement, options?: object) => {
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(target, options)
+    }
+  }
+
+  return (
+    <LenisContext.Provider value={{ scrollTo }}>
+      {children}
+    </LenisContext.Provider>
+  )
 }
 
-// Export for programmatic scroll control
-export function scrollTo(target: string | number | HTMLElement, options?: object) {
-  if (lenisInstance) {
-    lenisInstance.scrollTo(target, options)
-  }
+export function useLenis() {
+  return useContext(LenisContext)
 }

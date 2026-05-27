@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Mail, Phone, MapPin, ArrowRight } from '@/components/ui/Icons'
@@ -10,6 +10,26 @@ export default function ContactSection() {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const leftColRef = useRef<HTMLDivElement>(null)
   const rightColRef = useRef<HTMLDivElement>(null)
+
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [selectedService, setSelectedService] = useState('')
+  const [messageText, setMessageText] = useState('')
+
+  useEffect(() => {
+    const handleQuoteEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ service: string; summary: string }>
+      if (customEvent.detail) {
+        setSelectedService(customEvent.detail.service)
+        setMessageText(customEvent.detail.summary)
+      }
+    }
+
+    window.addEventListener('scorviro:select-quote', handleQuoteEvent)
+    return () => {
+      window.removeEventListener('scorviro:select-quote', handleQuoteEvent)
+    }
+  }, [])
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
@@ -122,8 +142,65 @@ export default function ContactSection() {
     }
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setStatus('submitting')
+    setErrorMessage('')
+
+    const formData = new FormData(e.currentTarget)
+    const name = formData.get('name')?.toString().trim() || ''
+    const email = formData.get('email')?.toString().trim() || ''
+    const service = formData.get('service')?.toString().trim() || ''
+    const message = formData.get('message')?.toString().trim() || ''
+
+    // 1. Presence check
+    if (!name || !email || !service || !message) {
+      setStatus('error')
+      setErrorMessage("All fields are required.")
+      return
+    }
+
+    // 2. Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setStatus('error')
+      setErrorMessage("Please enter a valid email address.")
+      return
+    }
+
+    // 3. Length limits
+    if (name.length < 2 || name.length > 100) {
+      setStatus('error')
+      setErrorMessage("Name must be between 2 and 100 characters.")
+      return
+    }
+
+    if (message.length < 10 || message.length > 5000) {
+      setStatus('error')
+      setErrorMessage("Message must be between 10 and 5000 characters.")
+      return
+    }
+
+    // 4. Capability domain validation
+    const validServices = ['videography', 'webdev', 'design', 'photography']
+    if (!validServices.includes(service)) {
+      setStatus('error')
+      setErrorMessage("Please select a valid capability.")
+      return
+    }
+
+    try {
+      // Mock API latency
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      e.currentTarget.reset()
+      setSelectedService('')
+      setMessageText('')
+      setStatus('success')
+    } catch {
+      setStatus('error')
+      setErrorMessage("An unexpected error occurred. Please try again.")
+    }
   }
 
   return (
@@ -208,6 +285,7 @@ export default function ContactSection() {
               </label>
               <input
                 type="text"
+                name="name"
                 placeholder="Full name"
                 required
                 className="bg-[#0c0c12]/95 border border-white/20 rounded-[10px] text-white font-body text-[15px] px-5 py-4 w-full outline-none transition-all duration-300 focus:border-white focus:bg-[#12121b]/95 focus:shadow-[0_0_15px_rgba(255,255,255,0.06)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] placeholder:text-white/35 font-medium"
@@ -221,6 +299,7 @@ export default function ContactSection() {
               </label>
               <input
                 type="email"
+                name="email"
                 placeholder="Email address"
                 required
                 className="bg-[#0c0c12]/95 border border-white/20 rounded-[10px] text-white font-body text-[15px] px-5 py-4 w-full outline-none transition-all duration-300 focus:border-white focus:bg-[#12121b]/95 focus:shadow-[0_0_15px_rgba(255,255,255,0.06)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] placeholder:text-white/35 font-medium"
@@ -234,8 +313,10 @@ export default function ContactSection() {
               </label>
               <div className="relative w-full">
                 <select
+                  name="service"
                   required
-                  defaultValue=""
+                  value={selectedService}
+                  onChange={(e) => setSelectedService(e.target.value)}
                   className="bg-[#0c0c12]/95 border border-white/20 rounded-[10px] text-white font-body text-[15px] px-5 py-4 w-full outline-none transition-all duration-300 focus:border-white focus:bg-[#12121b]/95 focus:shadow-[0_0_15px_rgba(255,255,255,0.06)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] appearance-none pr-10 cursor-pointer font-medium"
                 >
                   <option value="" disabled className="bg-[#0d0d14] text-white/30">Choose service</option>
@@ -259,9 +340,12 @@ export default function ContactSection() {
                 04 / DETAIL YOUR MISSION
               </label>
               <textarea
+                name="message"
                 rows={5}
                 placeholder="Tell us about the project objectives..."
                 required
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
                 className="bg-[#0c0c12]/95 border border-white/20 rounded-[10px] text-white font-body text-[15px] px-5 py-4 w-full outline-none transition-all duration-300 focus:border-white focus:bg-[#12121b]/95 focus:shadow-[0_0_15px_rgba(255,255,255,0.06)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] placeholder:text-white/35 font-medium resize-none"
               />
             </div>
@@ -269,11 +353,24 @@ export default function ContactSection() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="group mt-4 py-4.5 px-[52px] bg-transparent border border-white/30 hover:border-white text-white font-body text-[11px] tracking-[0.3em] rounded-[10px] cursor-pointer uppercase transition-all duration-350 ease-out hover:bg-white hover:text-black w-full sm:w-max text-center flex items-center justify-center gap-2 font-bold shadow-[0_4px_15px_rgba(255,255,255,0.08)]"
+              disabled={status === 'submitting'}
+              className="group mt-4 py-4.5 px-[52px] bg-transparent border border-white/30 hover:border-white text-white font-body text-[11px] tracking-[0.3em] rounded-[10px] cursor-pointer uppercase transition-all duration-350 ease-out hover:bg-white hover:text-black w-full sm:w-max text-center flex items-center justify-center gap-2 font-bold shadow-[0_4px_15px_rgba(255,255,255,0.08)] disabled:opacity-55 disabled:cursor-not-allowed"
             >
-              <span>SEND INQUIRY</span>
+              <span>{status === 'submitting' ? 'SENDING...' : 'SEND INQUIRY'}</span>
               <ArrowRight size={12} className="text-white group-hover:text-black group-hover:translate-x-1.5 transition-all duration-350" />
             </button>
+
+            {status === 'success' && (
+              <div className="font-body text-[13px] text-green-400 mt-2 tracking-[0.05em]">
+                Your message has been sent successfully. We will be in touch shortly.
+              </div>
+            )}
+
+            {status === 'error' && (
+              <div className="font-body text-[13px] text-red-400 mt-2 tracking-[0.05em]">
+                {errorMessage}
+              </div>
+            )}
           </form>
         </div>
 

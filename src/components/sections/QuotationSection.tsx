@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowRight, Phone } from '@/components/ui/Icons'
+import { useLenis } from '@/hooks/useLenis'
 
 interface Package {
   name: string
@@ -281,6 +282,7 @@ const graphicTerms = [
 ]
 
 export default function QuotationSection() {
+  const { scrollTo } = useLenis()
   const containerRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -337,58 +339,62 @@ export default function QuotationSection() {
   const [priceDisplay, setPriceDisplay] = useState<number>(25000)
   const priceDisplayRef = useRef<number>(25000)
 
-  // Refresh ScrollTrigger when tab shifts to avoid layout offset bugs
+  // Refresh ScrollTrigger when tab shifts to avoid layout offset bugs, delayed to prevent paint/layout thrashing during animations
   useEffect(() => {
-    ScrollTrigger.refresh()
+    const timer = setTimeout(() => {
+      ScrollTrigger.getById('quotation-trigger')?.refresh()
+    }, 200)
+    return () => clearTimeout(timer)
   }, [activeTab])
 
-  // Website Math
+  // Unified Pricing Calculator - evaluates only the currently active tab pricing parameters
   const calculatedPrice = useMemo(() => {
-    let basePrice = packages[selectedPackIndex].minPrice
-    const defaultPages = selectedPackIndex === 0 ? 5 : selectedPackIndex === 1 ? 10 : 15
-    if (pagesCount > defaultPages) {
-      basePrice += (pagesCount - defaultPages) * 1800
-    }
-    if (hasCMS && selectedPackIndex === 0) basePrice += 8000
-    if (hasPaymentGateway && selectedPackIndex !== 2) basePrice += 10000
-    if (hasAdvancedSEO && selectedPackIndex !== 2) basePrice += 5000
-    if (isRushDelivery) {
-      basePrice = Math.round(basePrice * 1.25)
-    }
-    return basePrice
-  }, [selectedPackIndex, pagesCount, hasCMS, hasPaymentGateway, hasAdvancedSEO, isRushDelivery])
-
-  // Videography Math
-  const calculatedVideoPrice = useMemo(() => {
-    let basePrice = videoPackages[selectedVideoPackIndex].minPrice
-
-    const drone = droneOptions.find(o => o.id === selectedDroneOption)
-    if (drone) {
-      basePrice += drone.price
-    }
-
-    Object.keys(selectedReels).forEach(key => {
-      const qty = selectedReels[key] || 0
-      const reelInfo = reelsPricing.find(r => r.id === key)
-      if (reelInfo && qty > 0) {
-        basePrice += reelInfo.price * qty
+    if (activeTab === 'web') {
+      const pack = packages[selectedPackIndex] || packages[0]
+      let basePrice = pack.minPrice
+      const defaultPages = selectedPackIndex === 0 ? 5 : selectedPackIndex === 1 ? 10 : 15
+      if (pagesCount > defaultPages) {
+        basePrice += (pagesCount - defaultPages) * 1800
       }
-    })
-
-    Object.keys(selectedExtras).forEach(key => {
-      const isChecked = selectedExtras[key] || false
-      const extraInfo = extraAddOns.find(e => e.id === key)
-      if (extraInfo && isChecked) {
-        basePrice += extraInfo.price
+      if (hasCMS && selectedPackIndex === 0) basePrice += 8000
+      if (hasPaymentGateway && selectedPackIndex !== 2) basePrice += 10000
+      if (hasAdvancedSEO && selectedPackIndex !== 2) basePrice += 5000
+      if (isRushDelivery) {
+        basePrice = Math.round(basePrice * 1.25)
       }
-    })
+      return basePrice
+    }
 
-    return basePrice
-  }, [selectedVideoPackIndex, selectedDroneOption, selectedReels, selectedExtras])
+    if (activeTab === 'video') {
+      const pack = videoPackages[selectedVideoPackIndex] || videoPackages[0]
+      let basePrice = pack.minPrice
 
-  // Graphic Math
-  const calculatedGraphicPrice = useMemo(() => {
-    const pack = graphicPackages[selectedGraphicPackIndex]
+      const drone = droneOptions.find(o => o.id === selectedDroneOption)
+      if (drone) {
+        basePrice += drone.price
+      }
+
+      Object.keys(selectedReels).forEach(key => {
+        const qty = selectedReels[key] || 0
+        const reelInfo = reelsPricing.find(r => r.id === key)
+        if (reelInfo && qty > 0) {
+          basePrice += reelInfo.price * qty
+        }
+      })
+
+      Object.keys(selectedExtras).forEach(key => {
+        const isChecked = selectedExtras[key] || false
+        const extraInfo = extraAddOns.find(e => e.id === key)
+        if (extraInfo && isChecked) {
+          basePrice += extraInfo.price
+        }
+      })
+
+      return basePrice
+    }
+
+    // graphic
+    const pack = graphicPackages[selectedGraphicPackIndex] || graphicPackages[0]
     let basePrice = pack.minPrice * graphicQuantity
 
     const isMonthly = selectedGraphicPackIndex === 2
@@ -410,22 +416,29 @@ export default function QuotationSection() {
     }
 
     return basePrice
-  }, [selectedGraphicPackIndex, graphicQuantity, graphicExtras])
+  }, [
+    activeTab,
+    selectedPackIndex, pagesCount, hasCMS, hasPaymentGateway, hasAdvancedSEO, isRushDelivery,
+    selectedVideoPackIndex, selectedDroneOption, selectedReels, selectedExtras,
+    selectedGraphicPackIndex, graphicQuantity, graphicExtras
+  ])
+
+  const activeTweenRef = useRef<gsap.core.Tween | null>(null)
 
   // Ticking number counter effect (animates to targeted calculated cost)
   useEffect(() => {
     const start = priceDisplayRef.current
-    const end = activeTab === 'web' 
-      ? calculatedPrice 
-      : activeTab === 'video' 
-        ? calculatedVideoPrice 
-        : calculatedGraphicPrice
+    const end = calculatedPrice
     if (start === end) return
+
+    if (activeTweenRef.current) {
+      activeTweenRef.current.kill()
+    }
 
     const duration = 0.8
     const obj = { val: start }
 
-    const tween = gsap.to(obj, {
+    activeTweenRef.current = gsap.to(obj, {
       val: end,
       duration: duration,
       ease: 'power2.out',
@@ -435,60 +448,67 @@ export default function QuotationSection() {
         setPriceDisplay(val)
       }
     })
+
     return () => {
-      tween.kill()
+      if (activeTweenRef.current) {
+        activeTweenRef.current.kill()
+        activeTweenRef.current = null
+      }
     }
-  }, [calculatedPrice, calculatedVideoPrice, calculatedGraphicPrice, activeTab])
+  }, [calculatedPrice])
 
   // Tab-change card animation effect (forces render visibility when swapping tabs)
   useEffect(() => {
-    const incGrid = inclusionsRef.current
-    const packGrid = packagesRef.current
-    const termsGrid = termsRef.current
+    const ctx = gsap.context(() => {
+      const incGrid = inclusionsRef.current
+      const packGrid = packagesRef.current
+      const termsGrid = termsRef.current
 
-    if (incGrid) {
-      const items = incGrid.querySelectorAll('.inclusion-card')
-      gsap.killTweensOf(items)
-      gsap.fromTo(items,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.05,
-          ease: 'power3.out'
-        }
-      )
-    }
+      if (incGrid) {
+        const items = incGrid.querySelectorAll('.inclusion-card')
+        gsap.fromTo(items,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            stagger: 0.05,
+            ease: 'power3.out'
+          }
+        )
+      }
 
-    if (packGrid) {
-      const cards = packGrid.querySelectorAll('.package-card')
-      gsap.killTweensOf(cards)
-      gsap.fromTo(cards,
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1.0,
-          stagger: 0.08,
-          ease: 'power3.out'
-        }
-      )
-    }
+      if (packGrid) {
+        const cards = packGrid.querySelectorAll('.package-card')
+        gsap.fromTo(cards,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.0,
+            stagger: 0.08,
+            ease: 'power3.out'
+          }
+        )
+      }
 
-    if (termsGrid) {
-      const cards = termsGrid.querySelectorAll('.term-card')
-      gsap.killTweensOf(cards)
-      gsap.fromTo(cards,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.05,
-          ease: 'power3.out'
-        }
-      )
+      if (termsGrid) {
+        const cards = termsGrid.querySelectorAll('.term-card')
+        gsap.fromTo(cards,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            stagger: 0.05,
+            ease: 'power3.out'
+          }
+        )
+      }
+    }, containerRef)
+
+    return () => {
+      ctx.revert()
     }
   }, [activeTab])
 
@@ -517,66 +537,122 @@ export default function QuotationSection() {
     else if (idx === 3) setGraphicQuantity(5)
   }
 
+  const handleRequestQuote = () => {
+    let service = 'webdev'
+    let summary = ''
+
+    if (activeTab === 'web') {
+      service = 'webdev'
+      const addons = []
+      if (hasCMS) addons.push('Custom Admin Panel / CMS')
+      if (hasPaymentGateway) addons.push('Razorpay Payment Gateway')
+      if (hasAdvancedSEO) addons.push('Advanced SEO & Analytics')
+      if (isRushDelivery) addons.push('Priority Rush Delivery (+25%)')
+      
+      const pack = packages[selectedPackIndex] || packages[0]
+      summary = `Requesting custom web architecture:\n` +
+        `- Baseline: ${pack.name} Package\n` +
+        `- Target Pages: ${pagesCount} Pages\n` +
+        `- Inclusions/Add-ons: ${addons.length > 0 ? addons.join(', ') : 'None'}`
+    } else if (activeTab === 'video') {
+      service = 'videography'
+      const extras = Object.entries(selectedExtras)
+        .filter(([, active]) => active)
+        .map(([id]) => extraAddOns.find(e => e.id === id)?.label || id)
+      
+      const reels = Object.entries(selectedReels)
+        .filter(([, qty]) => qty > 0)
+        .map(([id, qty]) => `${qty}x ${reelsPricing.find(r => r.id === id)?.label || id}`)
+
+      const droneLabel = droneOptions.find(d => d.id === selectedDroneOption)?.label || 'None'
+      const pack = videoPackages[selectedVideoPackIndex] || videoPackages[0]
+
+      summary = `Requesting custom shoot specifications:\n` +
+        `- Baseline: ${pack.name}\n` +
+        `- Drone Option: ${droneLabel}\n` +
+        `- Inclusions/Add-ons: ${[...reels, ...extras].join(', ') || 'None'}`
+    } else {
+      service = 'design'
+      const extras = []
+      if (graphicExtras.sourceFile) extras.push('Source File Delivery')
+      if (graphicExtras.animated) extras.push('Motion Graphics / GIF')
+      if (graphicExtras.copywriting) extras.push('Engaging Copywriting')
+      if (graphicExtras.abTesting) extras.push('Ad Creative Variant')
+      if (graphicExtras.rushDelivery) extras.push('24-Hour Urgent Delivery (+30%)')
+
+      const pack = graphicPackages[selectedGraphicPackIndex] || graphicPackages[0]
+      summary = `Requesting custom design specifications:\n` +
+        `- Baseline: ${pack.name}\n` +
+        `- Quantity: ${graphicQuantity} unit(s)\n` +
+        `- Inclusions/Add-ons: ${extras.join(', ') || 'None'}`
+    }
+
+    // Dispatch custom window event
+    const event = new CustomEvent('scorviro:select-quote', {
+      detail: { service, summary }
+    })
+    window.dispatchEvent(event)
+
+    // Smooth scroll to contact
+    const el = document.getElementById('contact')
+    if (el) {
+      scrollTo(el, {
+        offset: -80,
+        duration: 1.8,
+        easing: (t: number) => 1 - Math.pow(1 - t, 4)
+      })
+    }
+  }
+
   // Scroll animations
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
 
-    const container = containerRef.current
-    const wrapper = wrapperRef.current
-    const header = headerRef.current
-    const packGrid = packagesRef.current
-    const calcBlock = calculatorRef.current
+    const ctx = gsap.context(() => {
+      const container = containerRef.current
+      const wrapper = wrapperRef.current
+      const header = headerRef.current
+      const packGrid = packagesRef.current
+      const calcBlock = calculatorRef.current
 
-    if (container && wrapper && header) {
-      // 1. Entrance reveals (Triggered once)
-      gsap.fromTo(header,
-        { opacity: 0, y: 70 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1.4,
-          ease: 'power4.out',
-          scrollTrigger: {
-            trigger: header,
-            start: 'top 90%',
-            toggleActions: 'play none none reverse'
-          }
-        }
-      )
-
-      if (calcBlock) {
-        gsap.fromTo(calcBlock,
-          { opacity: 0, scale: 0.98, y: 40 },
+      if (container && wrapper && header) {
+        // 1. Entrance reveals (Triggered once)
+        gsap.fromTo(header,
+          { opacity: 0, y: 70 },
           {
             opacity: 1,
-            scale: 1,
             y: 0,
-            duration: 1.5,
+            duration: 1.4,
             ease: 'power4.out',
             scrollTrigger: {
-              trigger: calcBlock,
-              start: 'top 85%',
+              trigger: header,
+              start: 'top 90%',
               toggleActions: 'play none none reverse'
             }
           }
         )
-      }
 
-      // 2. Parallax Motion Scrub
-      gsap.to(header, {
-        y: -30,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: container,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.2
+        if (calcBlock) {
+          gsap.fromTo(calcBlock,
+            { opacity: 0, scale: 0.98, y: 40 },
+            {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              duration: 1.5,
+              ease: 'power4.out',
+              scrollTrigger: {
+                trigger: calcBlock,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse'
+              }
+            }
+          )
         }
-      })
 
-      if (packGrid) {
-        gsap.to(packGrid, {
-          y: -50,
+        // 2. Parallax Motion Scrub
+        gsap.to(header, {
+          y: -30,
           ease: 'none',
           scrollTrigger: {
             trigger: container,
@@ -585,36 +661,54 @@ export default function QuotationSection() {
             scrub: 1.2
           }
         })
-      }
 
-      // 3. Unified Cinematic Entrance & Exit Scroll Scrub Timeline
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: container,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.2,
+        if (packGrid) {
+          gsap.to(packGrid, {
+            y: -50,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: container,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2
+            }
+          })
         }
-      })
 
-      tl.fromTo(wrapper,
-        { opacity: 0, scale: 0.98, y: 50 },
-        { opacity: 1, scale: 1, y: 0, duration: 1, ease: 'none' }
-      )
-      .to(wrapper, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        duration: 3,
-        ease: 'none'
-      })
-      .to(wrapper, {
-        opacity: 0,
-        scale: 0.98,
-        y: -50,
-        duration: 1,
-        ease: 'none'
-      })
+        // 3. Unified Cinematic Entrance & Exit Scroll Scrub Timeline
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            id: 'quotation-trigger',
+            trigger: container,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.2,
+          }
+        })
+
+        tl.fromTo(wrapper,
+          { opacity: 0, scale: 0.98, y: 50 },
+          { opacity: 1, scale: 1, y: 0, duration: 1, ease: 'none' }
+        )
+        .to(wrapper, {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 3,
+          ease: 'none'
+        })
+        .to(wrapper, {
+          opacity: 0,
+          scale: 0.98,
+          y: -50,
+          duration: 1,
+          ease: 'none'
+        })
+      }
+    }, containerRef)
+
+    return () => {
+      ctx.revert()
     }
   }, [])
 
@@ -683,8 +777,6 @@ export default function QuotationSection() {
             <button
               onClick={() => {
                 setActiveTab('web')
-                priceDisplayRef.current = calculatedPrice
-                setPriceDisplay(calculatedPrice)
               }}
               className={`relative z-10 flex-1 py-3 text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.25em] uppercase font-bold text-center transition-colors duration-400 cursor-pointer ${
                 activeTab === 'web' ? 'text-black' : 'text-white hover:text-white/80'
@@ -695,8 +787,6 @@ export default function QuotationSection() {
             <button
               onClick={() => {
                 setActiveTab('video')
-                priceDisplayRef.current = calculatedVideoPrice
-                setPriceDisplay(calculatedVideoPrice)
               }}
               className={`relative z-10 flex-1 py-3 text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.25em] uppercase font-bold text-center transition-colors duration-400 cursor-pointer ${
                 activeTab === 'video' ? 'text-black' : 'text-white hover:text-white/80'
@@ -707,8 +797,6 @@ export default function QuotationSection() {
             <button
               onClick={() => {
                 setActiveTab('graphic')
-                priceDisplayRef.current = calculatedGraphicPrice
-                setPriceDisplay(calculatedGraphicPrice)
               }}
               className={`relative z-10 flex-1 py-3 text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.25em] uppercase font-bold text-center transition-colors duration-400 cursor-pointer ${
                 activeTab === 'graphic' ? 'text-black' : 'text-white hover:text-white/80'
@@ -1408,29 +1496,34 @@ export default function QuotationSection() {
                   <div className="flex justify-between w-full">
                     <span>Base Package:</span>
                     <span className="font-mono text-white font-bold">
-                      {activeTab === 'web' ? packages[selectedPackIndex].name : activeTab === 'video' ? videoPackages[selectedVideoPackIndex].name : graphicPackages[selectedGraphicPackIndex].name}
+                      {activeTab === 'web' 
+                        ? (packages[selectedPackIndex] || packages[0]).name 
+                        : activeTab === 'video' 
+                          ? (videoPackages[selectedVideoPackIndex] || videoPackages[0]).name 
+                          : (graphicPackages[selectedGraphicPackIndex] || graphicPackages[0]).name}
                     </span>
                   </div>
                   <div className="flex justify-between w-full mt-1.5">
                     <span>Target Timeline:</span>
                     <span className="font-mono text-white font-bold">
                       {activeTab === 'web' 
-                        ? (isRushDelivery ? 'Accelerated' : packages[selectedPackIndex].delivery)
+                        ? (isRushDelivery ? 'Accelerated' : (packages[selectedPackIndex] || packages[0]).delivery)
                         : activeTab === 'video'
-                          ? videoPackages[selectedVideoPackIndex].delivery
-                          : (graphicExtras.rushDelivery ? 'Urgent 24h' : graphicPackages[selectedGraphicPackIndex].delivery)
+                          ? (videoPackages[selectedVideoPackIndex] || videoPackages[0]).delivery
+                          : (graphicExtras.rushDelivery ? 'Urgent 24h' : (graphicPackages[selectedGraphicPackIndex] || graphicPackages[0]).delivery)
                       }
                     </span>
                   </div>
                 </div>
 
-                <a
-                  href="#contact"
+                <button
+                  type="button"
+                  onClick={handleRequestQuote}
                   className="group w-full mt-8 py-4 bg-white border border-white text-black font-body text-[10px] tracking-[0.3em] rounded-[4px] cursor-pointer uppercase transition-all duration-350 ease-out hover:bg-transparent hover:text-white flex items-center justify-center gap-2 font-bold shadow-[0_4px_15px_rgba(255,255,255,0.1)]"
                 >
                   <span>REQUEST QUOTE</span>
                   <ArrowRight size={10} className="text-black group-hover:text-white group-hover:translate-x-1 transition-all duration-350" />
-                </a>
+                </button>
 
               </div>
             </div>

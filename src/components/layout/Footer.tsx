@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { scrollTo } from '@/hooks/useLenis'
+import { useLenis } from '@/hooks/useLenis'
 import { Instagram, YouTube, LinkedIn, Mail } from '@/components/ui/Icons'
 
 export default function Footer() {
   const footerRef = useRef<HTMLElement>(null)
   const columnsRef = useRef<HTMLDivElement>(null)
   const tickerText = "CAPTURING MOMENTS · CRAFTING STORIES · CREATING IMPACT · SCORVIRO VIDEOGRAPHY · "
+  const { scrollTo } = useLenis()
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
@@ -85,9 +87,11 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             {/* Logo Badge with White Background */}
             <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-md shadow-white/10">
-              <img
+              <Image
                 src="/favicon.png"
                 alt="Scorviro Logo"
+                width={24}
+                height={24}
                 className="w-6 h-6 object-contain"
               />
             </div>
@@ -141,7 +145,7 @@ export default function Footer() {
           <span className="font-body text-[9px] tracking-[0.3em] text-white/45 uppercase mb-1">
             CONNECT
           </span>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="group/link flex items-center gap-2.5 font-body text-[13px] text-white/60 hover:text-white transition-colors duration-250">
+          <a href="https://www.instagram.com/scorviro" target="_blank" rel="noopener noreferrer" className="group/link flex items-center gap-2.5 font-body text-[13px] text-white/60 hover:text-white transition-colors duration-250">
             <Instagram size={14} className="text-white/40 group-hover/link:text-white group-hover/link:scale-105 transition-all duration-250" />
             <span>Instagram</span>
           </a>

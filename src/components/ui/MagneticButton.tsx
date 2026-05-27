@@ -33,13 +33,28 @@ export default function MagneticButton({
     const button = buttonRef.current
     if (!button) return
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
       const rect = button.getBoundingClientRect()
       const centerX = rect.left + rect.width / 2
       const centerY = rect.top + rect.height / 2
 
-      const deltaX = (e.clientX - centerX) * strength
-      const deltaY = (e.clientY - centerY) * strength
+      let clientX = 0
+      let clientY = 0
+
+      if ('touches' in e) {
+        if (e.touches && e.touches.length > 0) {
+          clientX = e.touches[0].clientX
+          clientY = e.touches[0].clientY
+        } else {
+          return
+        }
+      } else {
+        clientX = e.clientX
+        clientY = e.clientY
+      }
+
+      const deltaX = (clientX - centerX) * strength
+      const deltaY = (clientY - centerY) * strength
 
       x.set(deltaX)
       y.set(deltaY)
@@ -51,11 +66,15 @@ export default function MagneticButton({
     }
 
     button.addEventListener('mousemove', handleMouseMove as EventListener)
-    button.addEventListener('mouseleave', handleMouseLeave as EventListener)
+    button.addEventListener('touchmove', handleMouseMove as EventListener, { passive: true })
+    button.addEventListener('mouseleave', handleMouseLeave)
+    button.addEventListener('touchend', handleMouseLeave)
 
     return () => {
       button.removeEventListener('mousemove', handleMouseMove as EventListener)
-      button.removeEventListener('mouseleave', handleMouseLeave as EventListener)
+      button.removeEventListener('touchmove', handleMouseMove as EventListener)
+      button.removeEventListener('mouseleave', handleMouseLeave)
+      button.removeEventListener('touchend', handleMouseLeave)
     }
   }, [strength, x, y])
 
