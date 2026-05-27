@@ -82,10 +82,20 @@ export default function Footer() {
       >
         {/* Column 1: Brand Info */}
         <div className="footer-col col-span-2 md:col-span-1 flex flex-col items-start gap-4 opacity-0">
-          <span className="font-display text-[22px] text-white tracking-[0.25em] uppercase">
-            SCORVIRO
-          </span>
-          <p className="font-body text-[13px] text-white/40 leading-[1.8] max-w-[220px]">
+          <div className="flex items-center gap-3">
+            {/* Logo Badge with White Background */}
+            <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-md shadow-white/10">
+              <img
+                src="/favicon.png"
+                alt="Scorviro Logo"
+                className="w-6 h-6 object-contain"
+              />
+            </div>
+            <span className="font-display text-[22px] text-white tracking-[0.25em] uppercase">
+              SCORVIRO
+            </span>
+          </div>
+          <p className="font-body text-[13px] text-white/45 leading-[1.8] max-w-[220px]">
             Bespoke digital design, high-fidelity engineering, and cinematic narratives.
           </p>
         </div>

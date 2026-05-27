@@ -1,32 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
-  <!-- Volumetric dark background to blend on dark themes and pop on light themes -->
-  <rect width="100" height="100" rx="22" fill="#0A0A0A"/>
+  <!-- White background for browser tabs -->
+  <rect width="100" height="100" rx="22" fill="#FFFFFF"/>
   
-  <!-- Subtle border to define the shape on very dark browser tabs -->
-  <rect x="0.5" y="0.5" width="99" height="99" rx="21.5" stroke="#222222" stroke-width="1"/>
+  <!-- Subtle border to define the shape on white/light browser tabs -->
+  <rect x="0.5" y="0.5" width="99" height="99" rx="21.5" stroke="#EAEAEA" stroke-width="1"/>
   
-  <!-- Silver brand gradient for the interlocking S -->
-  <defs>
-    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="40%" stop-color="#EAEAEA" />
-      <stop offset="100%" stop-color="#A5A5A5" />
-    </linearGradient>
-  </defs>
-
-  <!-- Left Curve Half of "S" -->
-  <path
-    d="M 50 20 C 32 20, 26 40, 46 51 C 49 52.5, 50 54, 50 55"
-    stroke="url(#silverGradient)"
-    stroke-width="7"
-    stroke-linecap="round"
-  />
-  
-  <!-- Right Curve Half of "S" -->
-  <path
-    d="M 50 45 C 50 46, 51 47.5, 54 49 C 74 60, 68 80, 50 80"
-    stroke="url(#silverGradient)"
-    stroke-width="7"
-    stroke-linecap="round"
+  <!-- Black Triangle Logo with clean rounded corners -->
+  <polygon 
+    points="50,29 25,71 75,71" 
+    fill="#0A0A0A" 
+    stroke="#0A0A0A" 
+    stroke-width="6" 
+    stroke-linejoin="round"
   />
 </svg>

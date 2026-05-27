@@ -80,12 +80,24 @@ export default function Navbar({ visible }: NavbarProps) {
         }}
       >
         {/* Brand Logo */}
-        <span
+        <div
           onClick={() => handleNav('home')}
-          className="font-display text-white text-[17px] font-normal tracking-[0.32em] cursor-pointer uppercase select-none"
+          className="flex items-center gap-3 cursor-pointer select-none group"
         >
-          SCORVIRO
-        </span>
+          {/* Logo Badge with White Background */}
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:scale-105 shadow-md shadow-white/10">
+            <img
+              src="/favicon.png"
+              alt="Scorviro Logo"
+              className="w-5.5 h-5.5 object-contain"
+            />
+          </div>
+          <span
+            className="font-display text-white text-[17px] font-normal tracking-[0.32em] uppercase transition-colors duration-300 group-hover:text-white/80"
+          >
+            SCORVIRO
+          </span>
+        </div>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-[40px]" aria-label="Main Navigation">
