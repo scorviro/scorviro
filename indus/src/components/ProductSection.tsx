@@ -107,7 +107,7 @@ export default function ProductSection() {
           <div className="lg:col-span-7 flex justify-center">
             <div className="relative w-full max-w-[620px] aspect-square bg-zinc-50 rounded-xl overflow-hidden shadow-2xl border border-zinc-100 group">
               <Image 
-                src="/product_vmc.png" 
+                src="/demo/product_vmc.png" 
                 alt="NEXUS Vertical Machining Center" 
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
